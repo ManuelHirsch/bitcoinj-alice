@@ -6,11 +6,11 @@
     <parent>
         <groupId>org.bitcoinj</groupId>
         <artifactId>bitcoinj-parent</artifactId>
-        <version>0.13.1</version>
+        <version>0.13.1-alice-0.1.3</version>
     </parent>
 
     <artifactId>wallettemplate</artifactId>
-
+    <version>0.13.1-alice-0.1.3</version>
     <name>bitcoinj Wallet-Template</name>
 
     <build>
@@ -52,7 +52,6 @@
             </plugin>
         </plugins>
     </build>
-
 
     <dependencies>
         <dependency>

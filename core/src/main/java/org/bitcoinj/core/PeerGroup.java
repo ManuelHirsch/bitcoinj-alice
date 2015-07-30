@@ -379,7 +379,8 @@ public class PeerGroup implements TransactionBroadcaster {
         downloadTxDependencies = true;
 
         inactives = new PriorityQueue<PeerAddress>(1, new Comparator<PeerAddress>() {
-            @SuppressWarnings("FieldAccessNotGuarded")   // only called when inactives is accessed, and lock is held then.
+            @SuppressWarnings("FieldAccessNotGuarded")
+            // only called when inactives is accessed, and lock is held then.
             @Override
             public int compare(PeerAddress a, PeerAddress b) {
                 checkState(lock.isHeldByCurrentThread());
@@ -398,6 +399,11 @@ public class PeerGroup implements TransactionBroadcaster {
         peerEventListeners = new CopyOnWriteArrayList<ListenerRegistration<PeerEventListener>>();
         runningBroadcasts = Collections.synchronizedSet(new HashSet<TransactionBroadcast>());
         bloomFilterMerger = new FilterMerger(DEFAULT_BLOOM_FILTER_FP_RATE);
+
+        // Do not look for IP6 if system property set to prefer ip4
+        if (Boolean.TRUE.toString().equals(System.getProperty("java.net.preferIPv4Stack"))) {
+            ipv6Unreachable = true;
+        }
     }
 
     private CountDownLatch executorStartupLatch = new CountDownLatch(1);
@@ -468,7 +474,6 @@ public class PeerGroup implements TransactionBroadcaster {
         public void go() {
             if (!vRunning) return;
 
-            boolean doDiscovery = false;
             long now = Utils.currentTimeMillis();
             lock.lock();
             try {
@@ -476,14 +481,11 @@ public class PeerGroup implements TransactionBroadcaster {
                 // But, not on Android as there are none for this platform: it could only be a malicious app trying
                 // to hijack our traffic.
                 if (!Utils.isAndroidRuntime() && useLocalhostPeerWhenPossible && maybeCheckForLocalhostPeer() && firstRun) {
-                    log.info("Localhost peer detected, trying to use it instead of P2P discovery");
-                    maxConnections = 0;
+                    log.info("Localhost peer detected, trying to use it");
+                    // ALICE
                     connectToLocalHost();
                     return;
                 }
-
-                boolean havePeerWeCanTry = !inactives.isEmpty() && backoffMap.get(inactives.peek()).getRetryTime() <= now;
-                doDiscovery = !havePeerWeCanTry;
             } finally {
                 firstRun = false;
                 lock.unlock();
@@ -491,25 +493,21 @@ public class PeerGroup implements TransactionBroadcaster {
 
             // Don't hold the lock across discovery as this process can be very slow.
             boolean discoverySuccess = false;
-            if (doDiscovery) {
-                try {
-                    discoverySuccess = discoverPeers() > 0;
-                } catch (PeerDiscoveryException e) {
-                    log.error("Peer discovery failure", e);
-                }
+            try {
+                discoverySuccess = discoverPeers() > 0;
+            } catch (PeerDiscoveryException e) {
+                log.error("Peer discovery failure", e);
             }
 
             long retryTime;
             PeerAddress addrToTry;
             lock.lock();
             try {
-                if (doDiscovery) {
                     if (discoverySuccess) {
                         groupBackoff.trackSuccess();
                     } else {
                         groupBackoff.trackFailure();
                     }
-                }
                 // Inactives is sorted by backoffMap time.
                 if (inactives.isEmpty()) {
                     if (countConnectedAndPendingPeers() < getMaxConnections()) {
@@ -1830,6 +1828,8 @@ public class PeerGroup implements TransactionBroadcaster {
      * which is calculated by watching the transaction propagate across the network and be announced by peers.</p>
      */
     public TransactionBroadcast broadcastTransaction(final Transaction tx, final int minConnections) {
+        log.debug("Broadcasting transaction with hash {} and identity {}", tx.getHashAsString(), System.identityHashCode(tx));
+
         // If we don't have a record of where this tx came from already, set it to be ourselves so Peer doesn't end up
         // redownloading it from the network redundantly.
         if (tx.getConfidence().getSource().equals(TransactionConfidence.Source.UNKNOWN)) {
