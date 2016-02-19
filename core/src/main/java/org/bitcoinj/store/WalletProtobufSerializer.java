@@ -701,6 +701,7 @@ public class WalletProtobufSerializer {
                 confidenceType = ConfidenceType.UNKNOWN; break;
         }
         confidence.setConfidenceType(confidenceType);
+
         if (confidenceProto.hasAppearedAtHeight()) {
             if (confidence.getConfidenceType() != ConfidenceType.BUILDING) {
                 log.warn("Have appearedAtHeight but not BUILDING for tx {}", tx.getHashAsString());

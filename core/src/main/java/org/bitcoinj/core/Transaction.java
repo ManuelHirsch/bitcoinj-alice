@@ -1159,13 +1159,20 @@ public class Transaction extends ChildMessage implements Serializable {
     public TransactionConfidence getConfidence(TxConfidenceTable table) {
         TransactionConfidence confidenceInTable = table.getOrCreate(getHash());
         if (confidence == null) {
+            // Use the confidence from the table as that is all we have
             confidence = confidenceInTable;
         } else {
             // Check the confidence in the Context confidence table is the same object
             if (System.identityHashCode(confidence) != System.identityHashCode(confidenceInTable)) {
                 log.debug("Confidence in tx has identity {} but the one in the confidence table is {}", System.identityHashCode(confidence), System.identityHashCode(confidenceInTable));
-                log.debug("Using the one in the confidence table");
-                confidence = confidenceInTable;
+
+                if (ConfidenceType.UNKNOWN.equals(confidenceInTable.getConfidenceType())) {
+                    // Do not override an extant confidence if the confidenceType is Unknown
+                    log.debug("Not overriding confidence as confidenceType is Unknown");
+                } else {
+                    log.debug("Using the one in the confidence table");
+                    confidence = confidenceInTable;
+                }
             }
         }
         log.debug("TransactionConfidence for transaction with hash {} has identity {}", this.getHashAsString(), System.identityHashCode(confidence));
