@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A VersionMessage holds information exchanged during connection setup with another peer. Most of the fields are not
@@ -33,12 +35,14 @@ import java.net.UnknownHostException;
  */
 public class VersionMessage extends Message {
     private static final long serialVersionUID = 7313594258967483180L;
+    private static final Logger log = LoggerFactory.getLogger(VersionMessage.class);
 
     /** A services flag that denotes whether the peer has a copy of the block chain or not. */
     public static final int NODE_NETWORK = 1;
     /** A flag that denotes whether the peer supports the getutxos message or not. */
     public static final int NODE_GETUTXOS = 2;
 
+    public static final int NODE_BLOOM = 4;
     /**
      * The version number of the protocol spoken.
      */
@@ -307,9 +311,15 @@ public class VersionMessage extends Message {
      * is available and the memory pool of the remote peer will be queried when the downloadData property is true.
      */
     public boolean isBloomFilteringSupported() {
-        return clientVersion >= FilteredBlock.MIN_PROTOCOL_VERSION;
-    }
+        if(clientVersion < NetworkParameters.ProtocolVersion.NO_BLOOM_VERSION.getBitcoinProtocolVersion()){
+            return true;
+        }
+        else if((localServices & NODE_BLOOM) == NODE_BLOOM){
 
+            return true;
+        }
+        return false;
+    }
     /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
     public boolean isGetUTXOsSupported() {
         return clientVersion >= GetUTXOsMessage.MIN_PROTOCOL_VERSION &&

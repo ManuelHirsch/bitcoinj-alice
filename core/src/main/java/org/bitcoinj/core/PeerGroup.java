@@ -1299,50 +1299,57 @@ public class PeerGroup implements TransactionBroadcaster {
 
     protected void handleNewPeer(final Peer peer) {
         int newSize = -1;
-        lock.lock();
-        try {
-            groupBackoff.trackSuccess();
-            backoffMap.get(peer.getAddress()).trackSuccess();
+        if(peer.getVersionMessage().isBloomFilteringSupported()) {
+            lock.lock();
 
-            // Sets up the newly connected peer so it can do everything it needs to.
-            pendingPeers.remove(peer);
-            peers.add(peer);
-            newSize = peers.size();
-            log.info("{}: New peer      ({} connected, {} pending, {} max)", peer, newSize, pendingPeers.size(), maxConnections);
-            // Give the peer a filter that can be used to probabilistically drop transactions that
-            // aren't relevant to our wallet. We may still receive some false positives, which is
-            // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
-            if (bloomFilterMerger.getLastFilter() != null) peer.setBloomFilter(bloomFilterMerger.getLastFilter());
-            peer.setDownloadData(false);
-            // TODO: The peer should calculate the fast catchup time from the added wallets here.
-            for (Wallet wallet : wallets)
-                peer.addWallet(wallet);
-            if (downloadPeer == null) {
-                // Kick off chain download if we aren't already doing it.
-                setDownloadPeer(selectDownloadPeer(peers));
-                boolean shouldDownloadChain = downloadListener != null && chain != null;
-                if (shouldDownloadChain) {
-                    startBlockChainDownloadFromPeer(downloadPeer);
+            try {
+                groupBackoff.trackSuccess();
+                backoffMap.get(peer.getAddress()).trackSuccess();
+                // Sets up the newly connected peer so it can do everything it needs to.
+
+                pendingPeers.remove(peer);
+                peers.add(peer);
+                newSize = peers.size();
+                log.info("{}: New peer      ({} connected, {} pending, {} max)", peer, newSize, pendingPeers.size(), maxConnections);
+                // Give the peer a filter that can be used to probabilistically drop transactions that
+                // aren't relevant to our wallet. We may still receive some false positives, which is
+                // OK because it helps improve wallet privacy. Old nodes will just ignore the message.
+                if (bloomFilterMerger.getLastFilter() != null) peer.setBloomFilter(bloomFilterMerger.getLastFilter());
+                peer.setDownloadData(false);
+                // TODO: The peer should calculate the fast catchup time from the added wallets here.
+                for (Wallet wallet : wallets)
+                    peer.addWallet(wallet);
+                if (downloadPeer == null) {
+                    // Kick off chain download if we aren't already doing it.
+                    setDownloadPeer(selectDownloadPeer(peers));
+                    boolean shouldDownloadChain = downloadListener != null && chain != null;
+                    if (shouldDownloadChain) {
+                        startBlockChainDownloadFromPeer(downloadPeer);
+                    }
                 }
+                // Make sure the peer knows how to upload transactions that are requested from us.
+                peer.addEventListener(peerListener, Threading.SAME_THREAD);
+                // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
+                for (ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
+                    peer.addEventListenerWithoutOnDisconnect(registration.listener, registration.executor);
+                }
+
+            } finally {
+                lock.unlock();
             }
-            // Make sure the peer knows how to upload transactions that are requested from us.
-            peer.addEventListener(peerListener, Threading.SAME_THREAD);
-            // And set up event listeners for clients. This will allow them to find out about new transactions and blocks.
-            for (ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
-                peer.addEventListenerWithoutOnDisconnect(registration.listener, registration.executor);
+
+            final int fNewSize = newSize;
+            for (final ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
+                registration.executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        registration.listener.onPeerConnected(peer, fNewSize);
+                    }
+                });
             }
-        } finally {
-            lock.unlock();
         }
-
-        final int fNewSize = newSize;
-        for (final ListenerRegistration<PeerEventListener> registration : peerEventListeners) {
-            registration.executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    registration.listener.onPeerConnected(peer, fNewSize);
-                }
-            });
+        else {
+            pendingPeers.remove(peer);
         }
     }
 
