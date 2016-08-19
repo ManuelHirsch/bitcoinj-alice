@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
  */
 public class VersionMessage extends Message {
     private static final long serialVersionUID = 7313594258967483180L;
-    private static final Logger log = LoggerFactory.getLogger(VersionMessage.class);
 
     /** A services flag that denotes whether the peer has a copy of the block chain or not. */
     public static final int NODE_NETWORK = 1;
