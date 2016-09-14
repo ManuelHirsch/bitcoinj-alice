@@ -48,7 +48,7 @@ public abstract class NetworkParameters implements Serializable {
     /**
      * The protocol version this library implements.
      */
-    public static final int PROTOCOL_VERSION = 70001;
+    public static final int PROTOCOL_VERSION = ProtocolVersion.CURRENT.getBitcoinProtocolVersion();
 
     /**
      * The alert signing key originally owned by Satoshi, and now passed on to Gavin along with a few others.
@@ -418,4 +418,18 @@ public abstract class NetworkParameters implements Serializable {
      * networks.
      */
     public abstract boolean hasMaxMoney();
+    public static enum ProtocolVersion {
+        MINIMUM(70000),
+        PONG(60001),
+        BLOOM_FILTER(70000),
+        NO_BLOOM_VERSION(70011),
+        CURRENT(70001);
+        private final int bitcoinProtocol;
+        ProtocolVersion(final int bitcoinProtocol) {
+            this.bitcoinProtocol = bitcoinProtocol;
+        }
+        public int getBitcoinProtocolVersion() {
+            return bitcoinProtocol;
+        }
+    }
 }
