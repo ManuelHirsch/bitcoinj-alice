@@ -311,12 +311,14 @@ public class VersionMessage extends Message {
      */
     public boolean isBloomFilteringSupported() {
         if(clientVersion < NetworkParameters.ProtocolVersion.NO_BLOOM_VERSION.getBitcoinProtocolVersion()){
+            System.out.println(clientVersion + "is less than node bloom");
             return true;
         }
         else if((localServices & NODE_BLOOM) == NODE_BLOOM){
-
+            System.out.println(clientVersion + "is greater than node bloom but supports it");
             return true;
         }
+        System.out.println(clientVersion + "does not support node bloom");
         return false;
     }
     /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
