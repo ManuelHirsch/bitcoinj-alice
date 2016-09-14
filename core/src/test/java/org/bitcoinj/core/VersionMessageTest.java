@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import static org.bitcoinj.core.Utils.HEX;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 public class VersionMessageTest {
     @Test
@@ -33,20 +34,28 @@ public class VersionMessageTest {
         assertTrue(!ver.relayTxesBeforeFilter);
         assertTrue(ver.bestHeight == 1024);
         assertTrue(ver.subVer.equals("/BitCoinJ:0.7-SNAPSHOT/"));
-        
-        ver = new VersionMessage(params, HEX.decode("71110100000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000172f426974436f696e4a3a302e372d534e415053484f542f00040000"));
+        // clientVersion is 70001, NODE_BLOOM flag is clear  ==> true
+        assertTrue(ver.isBloomFilteringSupported());
+
+        ver = new VersionMessage(params, HEX.decode("7b110100000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000172f426974436f696e4a3a302e372d534e415053484f542f00040000"));
         assertTrue(ver.relayTxesBeforeFilter);
         assertTrue(ver.bestHeight == 1024);
         assertTrue(ver.subVer.equals("/BitCoinJ:0.7-SNAPSHOT/"));
-        
-        ver = new VersionMessage(params, HEX.decode("71110100000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000172f426974436f696e4a3a302e372d534e415053484f542f"));
+        // clientVersion is 70011, NODE_BLOOM flag is clear  ==> false
+        assertFalse(ver.isBloomFilteringSupported());
+
+        ver = new VersionMessage(params, HEX.decode("71110100040000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000172f426974436f696e4a3a302e372d534e415053484f542f"));
         assertTrue(ver.relayTxesBeforeFilter);
         assertTrue(ver.bestHeight == 0);
         assertTrue(ver.subVer.equals("/BitCoinJ:0.7-SNAPSHOT/"));
-        
-        ver = new VersionMessage(params, HEX.decode("71110100000000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000"));
+        // clientVersion is 70001, NODE_BLOOM flag is set  ==> true
+        assertTrue(ver.isBloomFilteringSupported());
+
+        ver = new VersionMessage(params, HEX.decode("7b110100040000000000000048e5e95000000000000000000000000000000000000000000000ffff7f000001479d000000000000000000000000000000000000ffff7f000001479d0000000000000000"));
         assertTrue(ver.relayTxesBeforeFilter);
         assertTrue(ver.bestHeight == 0);
         assertTrue(ver.subVer.equals(""));
+        // clientVersion is 70011, NODE_BLOOM flag is set  ==> true
+        assertTrue(ver.isBloomFilteringSupported());
     }
 }

@@ -4,7 +4,7 @@
 
   <groupId>org.bitcoinj</groupId>
   <artifactId>bitcoinj-parent</artifactId>
-  <version>0.13.3-alice-0.2.1-SNAPSHOT</version>
+  <version>0.13.3-alice-0.2.1</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -48,6 +48,7 @@
     </mailingList>
   </mailingLists>
 
+    <!--
   <distributionManagement>
     <snapshotRepository>
       <id>ossrh</id>
@@ -58,6 +59,7 @@
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
+  -->
 
   <!-- Common build plugin configuration -->
   <build>
