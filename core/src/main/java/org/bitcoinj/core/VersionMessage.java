@@ -310,16 +310,8 @@ public class VersionMessage extends Message {
      * is available and the memory pool of the remote peer will be queried when the downloadData property is true.
      */
     public boolean isBloomFilteringSupported() {
-        if(clientVersion < NetworkParameters.ProtocolVersion.NO_BLOOM_VERSION.getBitcoinProtocolVersion()){
-            System.out.println(clientVersion + "is less than node bloom");
-            return true;
-        }
-        else if((localServices & NODE_BLOOM) == NODE_BLOOM){
-            System.out.println(clientVersion + "is greater than node bloom but supports it");
-            return true;
-        }
-        System.out.println(clientVersion + "does not support node bloom");
-        return false;
+         return clientVersion < NetworkParameters.ProtocolVersion.NO_BLOOM_VERSION.getBitcoinProtocolVersion() ||
+                 (localServices & NODE_BLOOM) == NODE_BLOOM;
     }
     /** Returns true if the protocol version and service bits both indicate support for the getutxos message. */
     public boolean isGetUTXOsSupported() {

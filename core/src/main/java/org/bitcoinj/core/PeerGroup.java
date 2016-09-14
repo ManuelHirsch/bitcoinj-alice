@@ -1299,7 +1299,12 @@ public class PeerGroup implements TransactionBroadcaster {
 
     protected void handleNewPeer(final Peer peer) {
         int newSize = -1;
-        if(peer.getVersionMessage().isBloomFilteringSupported()) {
+        boolean bloomFilteringSupported = peer.getVersionMessage().isBloomFilteringSupported();
+
+        log.info("{}: version={}, Bloom filtering {} supported", peer, peer.getVersionMessage().clientVersion,
+                bloomFilteringSupported ? "is" : "not");
+
+        if (bloomFilteringSupported) {
             lock.lock();
 
             try {
