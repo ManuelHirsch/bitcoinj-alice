@@ -40,7 +40,7 @@ public class VersionMessage extends Message {
     public static final int NODE_NETWORK = 1;
     /** A flag that denotes whether the peer supports the getutxos message or not. */
     public static final int NODE_GETUTXOS = 2;
-
+    /** A flag that indicates whether a peer support bloom filter queries */
     public static final int NODE_BLOOM = 4;
     /**
      * The version number of the protocol spoken.

@@ -676,10 +676,10 @@ public class PeerGroupTest extends TestWithPeerGroup {
 
         VersionMessage ver1 = new VersionMessage(params, 10);
         ver1.clientVersion = baseVer;
-        ver1.localServices = VersionMessage.NODE_NETWORK;
+        ver1.localServices = VersionMessage.NODE_NETWORK | VersionMessage.NODE_BLOOM;
         VersionMessage ver2 = new VersionMessage(params, 10);
         ver2.clientVersion = newVer;
-        ver2.localServices = VersionMessage.NODE_NETWORK;
+        ver2.localServices = VersionMessage.NODE_NETWORK | VersionMessage.NODE_BLOOM;
         peerGroup.start();
         assertFalse(future.isDone());
         connectPeer(1, ver1);
