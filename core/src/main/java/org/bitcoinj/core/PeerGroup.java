@@ -66,6 +66,8 @@ import static com.google.common.base.Preconditions.*;
  */
 public class PeerGroup implements TransactionBroadcaster {
     private static final Logger log = LoggerFactory.getLogger(PeerGroup.class);
+    private static final Logger peerConnectionLog = LoggerFactory.getLogger("PeerConnectionLog");
+
 
     // All members in this class should be marked with final, volatile, @GuardedBy or a mix as appropriate to define
     // their thread safety semantics. Volatile requires a Hungarian-style v prefix.
@@ -1301,7 +1303,7 @@ public class PeerGroup implements TransactionBroadcaster {
         int newSize = -1;
         boolean bloomFilteringSupported = peer.getVersionMessage().isBloomFilteringSupported();
 
-        log.info("{}: version={}, Bloom filtering {} supported", peer, peer.getVersionMessage().clientVersion,
+        peerConnectionLog.info("{}: version={}, Bloom filtering {} supported", peer, peer.getVersionMessage().clientVersion,
                 bloomFilteringSupported ? "is" : "not");
 
         if (bloomFilteringSupported) {
